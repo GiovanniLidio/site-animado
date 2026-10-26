@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Animado</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:     #0e0b14;
+  --gold:    #c9a84c;
+  --gold-lt: #e8c97a;
+  --rose:    #e8a0b0;
+  --cream:   #f5efe8;
+  --white:   #ffffff;
+  --glass:   rgba(255,255,255,0.06);
+  --border:  rgba(201,168,76,0.25);
+}
+html, body { height:100%; font-family:'DM Sans',sans-serif; overflow:hidden; background:var(--ink); color:var(--white); }
+
+/* ESTRELAS */
+#stars { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.star { position:absolute; border-radius:50%; background:white; animation:twinkle ease-in-out infinite; }
+@keyframes twinkle { 0%,100%{opacity:0.1;transform:scale(0.8)} 50%{opacity:0.9;transform:scale(1.2)} }
+
+/* PARTÍCULAS */
+#particles { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.particle { position:absolute; bottom:-30px; opacity:0; animation:riseUp linear infinite; }
+@keyframes riseUp { 0%{transform:translateY(0) rotate(-15deg);opacity:0} 8%{opacity:0.7} 92%{opacity:0.2} 100%{transform:translateY(-105vh) rotate(20deg);opacity:0} }
+
+/* FUNDO (muda de cor a cada tela: classes s1, s2, s3, s4) */
+#ambient { position:fixed; inset:0; z-index:0; transition:background 1.5s ease;
+  background: radial-gradient(ellipse 60% 50% at 20% 30%, rgba(42,13,46,0.9) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 60% at 80% 70%, rgba(20,10,40,0.8) 0%, transparent 70%),
+              linear-gradient(160deg, #0e0b14 0%, #140e22 40%, #1a0d20 100%); }
+#ambient.s2 { background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(60,20,50,0.8) 0%, transparent 65%), linear-gradient(160deg, #120a1e 0%, #1e0f1a 50%, #0e0b14 100%); }
+#ambient.s3 { background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(42,13,46,0.7) 0%, transparent 70%), linear-gradient(160deg, #100b1e 0%, #1a0e2a 100%); }
+#ambient.s4 { background: radial-gradient(ellipse 60% 60% at 70% 30%, rgba(201,168,76,0.08) 0%, transparent 60%), linear-gradient(160deg, #0e0b14 0%, #140e22 100%); }
+
+/* CAMADA DE TRANSIÇÃO ENTRE TELAS */
+#overlay { position:fixed; inset:0; background:var(--ink); z-index:200; opacity:0; pointer-events:none; transition:opacity 0.6s ease; }
+#overlay.show { opacity:1; pointer-events:all; }
+
+/* TELAS */
+.screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:10; opacity:0; pointer-events:none; transition:opacity 0.6s ease; padding:24px; }
+.screen.active { opacity:1; pointer-events:all; }
+
+/* CARTÃO */
+.card { background:var(--glass); border:1px solid var(--border); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border-radius:24px; padding:44px 48px; max-width:540px; width:100%; position:relative; overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,0.6); }
+.card::after { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.6; }
+
+/* ETIQUETA */
+.tag { display:flex; align-items:center; gap:8px; font-size:10px; font-weight:500; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); margin-bottom:28px; }
+.tag-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold); animation:glow 2s ease-in-out infinite; }
+@keyframes glow { 0%,100%{box-shadow:0 0 6px var(--gold)} 50%{box-shadow:0 0 16px var(--gold-lt),0 0 30px rgba(201,168,76,0.4)} }
+
+/* TELA 1 */
+#s1-inner { text-align:center; }
+#s1-eyebrow { font-size:10px; letter-spacing:3.5px; text-transform:uppercase; color:var(--gold); opacity:0.7; margin-bottom:28px; }
+#s1-title { font-family:'Cormorant Garamond',serif; font-size:clamp(52px,11vw,88px); font-weight:700; line-height:1.0; color:var(--cream); margin-bottom:20px; letter-spacing:-1px; min-height:90px; }
+#s1-sub { font-size:clamp(15px,2.5vw,18px); font-weight:300; color:rgba(245,239,232,0.55); line-height:1.6; margin-bottom:48px; min-height:28px; }
+#s1-btn { opacity:0; transform:translateY(12px); transition:opacity 0.7s ease,transform 0.7s ease; }
+#s1-btn.show { opacity:1; transform:translateY(0); }
+
+/* BOTÕES */
+.btn { display:inline-flex; align-items:center; gap:10px; padding:15px 36px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.35s ease; letter-spacing:0.5px; }
+.btn-gold { background:linear-gradient(135deg,var(--gold),#a07830); border:none; color:#1a0f08; box-shadow:0 4px 24px rgba(201,168,76,0.3); }
+.btn-gold:hover { background:linear-gradient(135deg,var(--gold-lt),var(--gold)); box-shadow:0 8px 40px rgba(201,168,76,0.5); transform:translateY(-2px); }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--cream); }
+.btn-ghost:hover { background:rgba(201,168,76,0.08); border-color:rgba(201,168,76,0.5); transform:translateY(-2px); }
+
+/* CURSOR PISCANTE (efeito de digitação) */
+.cursor { display:inline-block; width:1.5px; height:0.95em; background:var(--gold); margin-left:2px; vertical-align:text-bottom; animation:blink 0.75s step-end infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* TELA 2 */
+#s2-text { font-family:'Cormorant Garamond',serif; font-size:clamp(20px,3.5vw,26px); font-weight:600; line-height:1.6; color:var(--cream); margin-bottom:36px; min-height:90px; }
+.flower-wrap { display:flex; justify-content:center; margin:4px 0 32px; }
+.flower { width:120px; height:120px; position:relative; }
+.petal { position:absolute; width:38px; height:62px; border-radius:50% 50% 50% 50%/60% 60% 40% 40%; top:50%; left:50%; transform-origin:50% 100%; margin-left:-19px; margin-top:-62px; opacity:0; transition:opacity 0.5s ease,filter 0.5s ease; background:radial-gradient(ellipse at 40% 25%,#f5d0e0,#e0a0c0 55%,#c07898); filter:blur(2px); }
+.petal.show { opacity:1; filter:blur(0); }
+.petal:nth-child(1){transform:rotate(0deg)} .petal:nth-child(2){transform:rotate(51.4deg)} .petal:nth-child(3){transform:rotate(102.8deg)} .petal:nth-child(4){transform:rotate(154.2deg)} .petal:nth-child(5){transform:rotate(205.7deg)} .petal:nth-child(6){transform:rotate(257.1deg)} .petal:nth-child(7){transform:rotate(308.5deg)}
+.flower-center { position:absolute; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle,#ffe080,#e09020); top:50%; left:50%; transform:translate(-50%,-50%) scale(0); transition:transform 0.5s cubic-bezier(.34,1.56,.64,1) 0.3s; box-shadow:0 0 20px rgba(255,200,60,0.7),0 0 50px rgba(255,200,60,0.3); }
+.flower-center.show { transform:translate(-50%,-50%) scale(1); }
+#s2-btn { opacity:0; transition:opacity 0.6s ease; text-align:center; }
+#s2-btn.show { opacity:1; }
+
+/* TELA 3 */
+#s3 .card { text-align:center; }
+#s3-title { font-family:'Cormorant Garamond',serif; font-size:clamp(32px,7vw,50px); font-weight:700; line-height:1.15; color:var(--cream); margin:0 0 8px; white-space:pre-line; }
+.gold-line { width:48px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:18px auto; }
+#s3-message { font-family:'Cormorant Garamond',serif; font-size:clamp(16px,2.8vw,20px); font-style:italic; font-weight:400; color:rgba(245,239,232,0.78); line-height:1.85; margin-bottom:20px; min-height:100px; }
+#s3-sign { font-size:12px; color:var(--gold); letter-spacing:1.5px; margin-bottom:28px; opacity:0; transition:opacity 0.8s ease; }
+#s3-sign.show { opacity:1; }
+#s3-footer { font-size:12px; color:rgba(245,239,232,0.35); font-style:italic; letter-spacing:0.5px; margin-bottom:16px; opacity:0; transition:opacity 0.8s ease; }
+#s3-btn { opacity:0; transition:opacity 0.6s ease; }
+#s3-btn.show { opacity:1; }
+
+/* TELA 4 */
+#s4 .card { text-align:center; }
+#s4-title { font-family:'Cormorant Garamond',serif; font-size:clamp(24px,5vw,36px); font-weight:700; line-height:1.25; color:var(--cream); margin:4px 0 28px; white-space:pre-line; }
+.counter-wrap { background:rgba(0,0,0,0.35); border:1px solid rgba(201,168,76,0.15); border-radius:16px; padding:24px 20px 20px; margin-bottom:22px; }
+.c-row { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.c-unit { display:flex; flex-direction:column; align-items:center; min-width:64px; }
+.c-num { font-family:'Cormorant Garamond',serif; font-size:clamp(30px,6vw,46px); font-weight:700; line-height:1; color:var(--gold-lt); }
+.c-small .c-num { font-size:clamp(22px,4vw,32px); color:var(--rose); }
+.c-lbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-top:4px; }
+.c-divider { color:rgba(201,168,76,0.3); font-size:28px; line-height:1; margin-top:-4px; align-self:center; }
+#s4-status { font-size:13px; color:rgba(245,239,232,0.5); line-height:1.8; margin-bottom:26px; }
+#s4-status strong { color:var(--gold); }
+
+/* BOTÃO DE MÚSICA (só aparece se CONFIG.musica tiver um arquivo) */
+#musicBtn { position:fixed; bottom:20px; right:20px; z-index:500; width:42px; height:42px; border-radius:50%; background:rgba(201,168,76,0.15); border:1px solid rgba(201,168,76,0.35); color:#e8c97a; font-size:18px; cursor:pointer; backdrop-filter:blur(10px); transition:all 0.3s ease; display:none; }
+#musicBtn:hover { background:rgba(201,168,76,0.28); }
+
+@media(max-width:480px){ .card{padding:32px 28px} #s1-title{font-size:48px} }
+</style>
+</head>
+<body>
+
+<div id="ambient"></div>
+<div id="stars"></div>
+<div id="particles"></div>
+<div id="overlay"></div>
+<button id="musicBtn" title="Pausar / Tocar música" aria-label="Pausar ou tocar música">🎵</button>
+
+<!-- TELA 1: abertura -->
+<div class="screen active" id="s1">
+  <div id="s1-inner">
+    <div id="s1-eyebrow"></div>
+    <div id="s1-title"></div>
+    <div id="s1-sub"></div>
+    <div id="s1-btn">
+      <button class="btn btn-gold" id="btnAbrir">Começar &nbsp;✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA 2: flor animada -->
+<div class="screen" id="s2">
+  <div class="card">
+    <div class="tag"><span class="tag-dot"></span><span id="s2-tag"></span></div>
+    <div id="s2-text"></div>
+    <div class="flower-wrap">
+      <div class="flower" id="flower">
+        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+        <div class="petal"></div>
+        <div class="flower-center" id="fCenter"></div>
+      </div>
+    </div>
+    <div id="s2-btn">
+      <button class="btn btn-ghost" id="btnMensagem">Ver mensagem &nbsp;→</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA 3: mensagem -->
+<div class="screen" id="s3">
+  <div class="card">
+    <div class="tag" style="justify-content:center;"><span class="tag-dot"></span><span id="s3-tag"></span></div>
+    <div id="s3-title"></div>
+    <div class="gold-line"></div>
+    <div id="s3-message"></div>
+    <div id="s3-sign"></div>
+    <div id="s3-footer"></div>
+    <div id="s3-btn">
+      <button class="btn btn-gold" id="btnContador">Ver o contador &nbsp;→</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA 4: contador em tempo real -->
+<div class="screen" id="s4">
+  <div class="card">
+    <div class="tag" style="justify-content:center;"><span class="tag-dot"></span><span id="s4-tag"></span></div>
+    <div id="s4-title"></div>
+    <div class="counter-wrap">
+      <div class="c-row">
+        <div class="c-unit"><div class="c-num" id="cY">0</div><div class="c-lbl">Anos</div></div>
+        <div class="c-divider">·</div>
+        <div class="c-unit"><div class="c-num" id="cM">00</div><div class="c-lbl">Meses</div></div>
+        <div class="c-divider">·</div>
+        <div class="c-unit"><div class="c-num" id="cD">00</div><div class="c-lbl">Dias</div></div>
+      </div>
+      <div class="c-row c-small">
+        <div class="c-unit"><div class="c-num" id="cH">00</div><div class="c-lbl">Horas</div></div>
+        <div class="c-divider" style="color:rgba(232,160,176,0.3)">·</div>
+        <div class="c-unit"><div class="c-num" id="cMin">00</div><div class="c-lbl">Minutos</div></div>
+        <div class="c-divider" style="color:rgba(232,160,176,0.3)">·</div>
+        <div class="c-unit"><div class="c-num" id="cS">00</div><div class="c-lbl">Segundos</div></div>
+      </div>
+    </div>
+    <div id="s4-status">Deploy realizado com sucesso.<br>Status: <strong>em produção 🚀</strong></div>
+    <button class="btn btn-ghost" id="btnReiniciar" style="width:100%;justify-content:center;">↩ &nbsp;Rodar de novo</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO: troque aqui os textos, a data e a música.
+// Todo o resto do código usa estes valores.
+// ════════════════════════════════════════════════════════════
+const CONFIG = {
+  autor: 'Seu Nome',
+  dataInicial: '2024-01-01T00:00:00', // o contador mostra o tempo desde esta data
+  musica: '',                         // ex.: 'minha-musica.mp3' (deixe vazio para ficar sem som)
+
+  tela1: {
+    etiqueta: 'Site animado · Demonstração',
+    titulo: 'Olá, mundo.',
+    subtitulo: 'Uma flor nascendo na tela, feita só com código.',
+  },
+  tela2: {
+    etiqueta: 'Primeiro commit',
+    texto: 'Não precisei de um jardim... então programei uma flor.',
+  },
+  tela3: {
+    etiqueta: 'Uma mensagem para você',
+    titulo: 'Pequenos detalhes\nfazem a diferença',
+    mensagem: 'Animações, texto digitado e um contador em tempo real podem contar uma história. Este site é um exemplo de como transformar HTML, CSS e JavaScript em algo que emociona.',
+    rodape: 'Feito com HTML, CSS e JavaScript.',
+  },
+  tela4: {
+    etiqueta: 'Contador em tempo real',
+    titulo: 'Tempo desde\numa data especial',
+  },
+};
+
+// ════════════════════════════════════════════════════════════
+// ESTRELAS DE FUNDO: cria 120 pontinhos que piscam
+// ════════════════════════════════════════════════════════════
+(function criarEstrelas() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const estrela = document.createElement('div');
+    estrela.className = 'star';
+    const tamanho = Math.random() * 2.5 + 0.5;
+    estrela.style.cssText =
+      'width:' + tamanho + 'px;height:' + tamanho + 'px;' +
+      'left:' + Math.random() * 100 + '%;top:' + Math.random() * 100 + '%;' +
+      'animation-duration:' + (2 + Math.random() * 5) + 's;' +
+      'animation-delay:' + Math.random() * 6 + 's;';
+    container.appendChild(estrela);
+  }
+})();
+
+// ════════════════════════════════════════════════════════════
+// PARTÍCULAS: símbolos que sobem pela tela
+// ════════════════════════════════════════════════════════════
+(function criarParticulas() {
+  const container = document.getElementById('particles');
+  const simbolos = ['✦', '✧', '·', '✿'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = simbolos[Math.floor(Math.random() * simbolos.length)];
+    p.style.cssText =
+      'left:' + Math.random() * 100 + '%;' +
+      'animation-duration:' + (10 + Math.random() * 16) + 's;' +
+      'animation-delay:' + Math.random() * 14 + 's;' +
+      'font-size:' + (10 + Math.random() * 12) + 'px;' +
+      'color:rgba(201,168,76,' + (0.15 + Math.random() * 0.35) + ');';
+    container.appendChild(p);
+  }
+})();
+
+// ════════════════════════════════════════════════════════════
+// MÚSICA (opcional): só funciona se CONFIG.musica tiver um arquivo
+// ════════════════════════════════════════════════════════════
+const botaoMusica = document.getElementById('musicBtn');
+let audio = null;
+
+if (CONFIG.musica) {
+  audio = new Audio(CONFIG.musica);
+  audio.loop = true;
+  audio.volume = 0.35;
+
+  botaoMusica.addEventListener('click', function () {
+    if (audio.paused) { audio.play(); botaoMusica.textContent = '🎵'; }
+    else { audio.pause(); botaoMusica.textContent = '🔇'; }
+  });
+}
+
+function iniciarMusica() {
+  if (!audio) return; // sem música configurada, não faz nada
+  audio.currentTime = 0;
+  // o navegador só permite tocar depois de um clique do usuário
+  audio.play().catch(function () {});
+  botaoMusica.style.display = 'block';
+}
+
+// ════════════════════════════════════════════════════════════
+// EFEITO DE DIGITAÇÃO: escreve o texto letra por letra
+// ════════════════════════════════════════════════════════════
+function digitar(idElemento, texto, velocidade, aoTerminar) {
+  const el = document.getElementById(idElemento);
+  el.innerHTML = '';
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+
+  let posicao = 0;
+  const intervalo = setInterval(function () {
+    if (posicao < texto.length) {
+      el.insertBefore(document.createTextNode(texto[posicao]), cursor);
+      posicao++;
+    } else {
+      clearInterval(intervalo);
+      setTimeout(function () {
+        cursor.remove();
+        if (aoTerminar) aoTerminar();
+      }, 350);
+    }
+  }, velocidade);
+}
+
+// ════════════════════════════════════════════════════════════
+// TROCA DE TELAS: escurece, troca a tela e clareia
+// ════════════════════════════════════════════════════════════
+let telaAtual = 1;
+let timerContador = null;
+
+function irPara(numero) {
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('show');
+
+  setTimeout(function () {
+    document.getElementById('s' + telaAtual).classList.remove('active');
+    telaAtual = numero;
+    document.getElementById('s' + numero).classList.add('active');
+    document.getElementById('ambient').className = 's' + numero;
+    overlay.classList.remove('show');
+
+    if (numero === 1) iniciarTela1();
+    if (numero === 2) iniciarTela2();
+    if (numero === 3) iniciarTela3();
+    if (numero === 4) iniciarTela4();
+  }, 600);
+}
+
+// ════════════════════════════════════════════════════════════
+// TELA 1
+// ════════════════════════════════════════════════════════════
+function iniciarTela1() {
+  // para o contador, caso o usuário tenha voltado da tela 4
+  if (timerContador) { clearInterval(timerContador); timerContador = null; }
+
+  document.getElementById('s1-eyebrow').textContent = CONFIG.tela1.etiqueta;
+  document.getElementById('s1-title').innerHTML = '';
+  document.getElementById('s1-sub').innerHTML = '';
+  document.getElementById('s1-btn').classList.remove('show');
+
+  digitar('s1-title', CONFIG.tela1.titulo, 65, function () {
+    setTimeout(function () {
+      digitar('s1-sub', CONFIG.tela1.subtitulo, 45, function () {
+        setTimeout(function () {
+          document.getElementById('s1-btn').classList.add('show');
+        }, 300);
+      });
+    }, 200);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// TELA 2: a flor surge pétala por pétala
+// ════════════════════════════════════════════════════════════
+function iniciarTela2() {
+  document.getElementById('s2-tag').textContent = CONFIG.tela2.etiqueta;
+  document.getElementById('s2-text').innerHTML = '';
+
+  const petalas = document.querySelectorAll('.petal');
+  const centro = document.getElementById('fCenter');
+  const botao = document.getElementById('s2-btn');
+
+  petalas.forEach(function (p) { p.classList.remove('show'); });
+  centro.classList.remove('show');
+  botao.classList.remove('show');
+
+  digitar('s2-text', CONFIG.tela2.texto, 38, function () {
+    petalas.forEach(function (petala, i) {
+      // cada pétala aparece 180 ms depois da anterior
+      setTimeout(function () {
+        petala.classList.add('show');
+        if (i === petalas.length - 1) {
+          setTimeout(function () {
+            centro.classList.add('show');
+            setTimeout(function () { botao.classList.add('show'); }, 500);
+          }, 150);
+        }
+      }, i * 180);
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// TELA 3
+// ════════════════════════════════════════════════════════════
+function iniciarTela3() {
+  document.getElementById('s3-tag').textContent = CONFIG.tela3.etiqueta;
+  document.getElementById('s3-title').textContent = CONFIG.tela3.titulo;
+  document.getElementById('s3-message').innerHTML = '';
+  document.getElementById('s3-footer').textContent = CONFIG.tela3.rodape;
+
+  const assinatura = document.getElementById('s3-sign');
+  const rodape = document.getElementById('s3-footer');
+  const botao = document.getElementById('s3-btn');
+
+  assinatura.textContent = '— ' + CONFIG.autor;
+  assinatura.classList.remove('show');
+  rodape.style.opacity = '0';
+  botao.classList.remove('show');
+
+  setTimeout(function () {
+    digitar('s3-message', CONFIG.tela3.mensagem, 25, function () {
+      setTimeout(function () {
+        assinatura.classList.add('show');
+        rodape.style.opacity = '1';
+        setTimeout(function () { botao.classList.add('show'); }, 400);
+      }, 300);
+    });
+  }, 300);
+}
+
+// ════════════════════════════════════════════════════════════
+// TELA 4: contador em tempo real
+// ════════════════════════════════════════════════════════════
+function calcularTempoDecorrido(inicio, agora) {
+  // diferença por calendário: respeita meses de 28, 30 e 31 dias
+  let anos = agora.getFullYear() - inicio.getFullYear();
+  let meses = agora.getMonth() - inicio.getMonth();
+  let dias = agora.getDate() - inicio.getDate();
+  let horas = agora.getHours() - inicio.getHours();
+  let minutos = agora.getMinutes() - inicio.getMinutes();
+  let segundos = agora.getSeconds() - inicio.getSeconds();
+
+  // "empresta" da unidade maior quando o resultado fica negativo
+  if (segundos < 0) { segundos += 60; minutos--; }
+  if (minutos < 0)  { minutos += 60;  horas--; }
+  if (horas < 0)    { horas += 24;    dias--; }
+  if (dias < 0) {
+    // soma os dias do mês anterior ao atual
+    dias += new Date(agora.getFullYear(), agora.getMonth(), 0).getDate();
+    meses--;
+  }
+  if (meses < 0)    { meses += 12;    anos--; }
+
+  return { anos, meses, dias, horas, minutos, segundos };
+}
+
+function iniciarTela4() {
+  if (timerContador) clearInterval(timerContador);
+
+  document.getElementById('s4-tag').textContent = CONFIG.tela4.etiqueta;
+  document.getElementById('s4-title').textContent = CONFIG.tela4.titulo;
+
+  const inicio = new Date(CONFIG.dataInicial);
+  const doisDigitos = function (n) { return String(n).padStart(2, '0'); };
+
+  function atualizar() {
+    const agora = new Date();
+    // se a data inicial estiver no futuro, mostra tudo zerado
+    const t = agora >= inicio
+      ? calcularTempoDecorrido(inicio, agora)
+      : { anos: 0, meses: 0, dias: 0, horas: 0, minutos: 0, segundos: 0 };
+
+    document.getElementById('cY').textContent   = t.anos;
+    document.getElementById('cM').textContent   = doisDigitos(t.meses);
+    document.getElementById('cD').textContent   = doisDigitos(t.dias);
+    document.getElementById('cH').textContent   = doisDigitos(t.horas);
+    document.getElementById('cMin').textContent = doisDigitos(t.minutos);
+    document.getElementById('cS').textContent   = doisDigitos(t.segundos);
+  }
+
+  atualizar();
+  timerContador = setInterval(atualizar, 1000); // roda a cada 1 segundo
+}
+
+// ════════════════════════════════════════════════════════════
+// BOTÕES e INÍCIO
+// ════════════════════════════════════════════════════════════
+document.getElementById('btnAbrir').addEventListener('click', function () {
+  iniciarMusica();
+  irPara(2);
+});
+document.getElementById('btnMensagem').addEventListener('click', function () { irPara(3); });
+document.getElementById('btnContador').addEventListener('click', function () { irPara(4); });
+document.getElementById('btnReiniciar').addEventListener('click', function () { irPara(1); });
+
+document.getElementById('ambient').className = 's1';
+iniciarTela1();
+</script>
+</body>
+</html>
